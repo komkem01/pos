@@ -1,21 +1,60 @@
 <template>
   <div class="flex h-screen select-none bg-slate-100">
-
     <!-- ===== LEFT: Products ===== -->
-    <div class="flex flex-1 flex-col overflow-hidden">
+    <div class="relative flex flex-1 flex-col overflow-hidden">
 
+      <!-- Overlay: ยังไม่ได้เปิดกะ (ปิดทับทุกอย่างใต้ topbar) -->
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        leave-active-class="transition-opacity duration-200"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="!shift.isOpen"
+          class="absolute inset-x-0 bottom-0 top-14 z-10 flex flex-col items-center justify-center bg-slate-100/80 backdrop-blur-[2px]"
+        >
+          <div class="flex flex-col items-center gap-3 rounded-2xl bg-white px-10 py-8 shadow-xl shadow-slate-200/60 text-center">
+            <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+              <Icon name="heroicons:lock-closed" class="h-8 w-8 text-slate-400" />
+            </div>
+            <div>
+              <p class="text-base font-bold text-slate-700">ยังไม่ได้เปิดกะ</p>
+              <p class="mt-0.5 text-sm text-slate-400">กรุณาไปเปิดกะก่อนเริ่มขาย</p>
+            </div>
+            <NuxtLink
+              to="/dashboard"
+              class="mt-1 flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-200 hover:bg-blue-700 transition active:scale-95"
+            >
+              <Icon name="heroicons:arrow-right-circle" class="h-4 w-4" />
+              ไปเปิดกะที่หลังบ้าน
+            </NuxtLink>
+          </div>
+        </div>
+      </Transition>
       <!-- Topbar -->
-      <div class="flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4">
+      <div
+        class="flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4"
+      >
         <!-- Store name -->
         <div class="flex items-center gap-2 mr-1">
-          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+          <div
+            class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600"
+          >
             <Icon name="heroicons:shopping-bag" class="h-4 w-4 text-white" />
           </div>
-          <span class="text-sm font-semibold text-slate-700 hidden sm:block">{{ setting.storeName }}</span>
+          <span class="text-sm font-semibold text-slate-700 hidden sm:block">{{
+            setting.storeName
+          }}</span>
         </div>
 
         <!-- Search -->
-        <div class="relative flex flex-1 items-center gap-2">
+        <div
+          :class="[
+            'relative flex flex-1 items-center gap-2 transition-opacity',
+            !shift.isOpen && 'pointer-events-none opacity-40',
+          ]"
+        >
           <div class="relative flex-1">
             <Icon
               name="heroicons:magnifying-glass"
@@ -49,16 +88,84 @@
 
         <!-- Logout -->
         <button
-          class="flex h-9 items-center gap-1.5 rounded-lg bg-red-50 px-3 text-xs font-medium text-red-500 hover:bg-red-100 transition active:scale-95"
-          @click="showLogoutConfirm = true"
+          :disabled="shift.isOpen"
+          :title="shift.isOpen ? 'ต้องปิดกะก่อนออกจากระบบ' : ''"
+          :class="[
+            'flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition active:scale-95',
+            shift.isOpen
+              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+              : 'bg-red-50 text-red-500 hover:bg-red-100',
+          ]"
+          @click="!shift.isOpen && (showLogoutConfirm = true)"
         >
           <Icon name="heroicons:arrow-right-on-rectangle" class="h-4 w-4" />
-          <!-- <span class="hidden sm:block">ออกจากระบบ</span> -->
         </button>
       </div>
 
+      <!-- Shift status banner -->
+      <div
+        v-if="shift.isOpen"
+        class="flex items-center gap-3 border-b border-emerald-100 bg-gradient-to-r from-emerald-500/[0.06] to-teal-500/[0.04] px-4 py-2"
+      >
+        <!-- Status pill -->
+        <div
+          class="flex shrink-0 items-center gap-2 rounded-full bg-emerald-500 px-3 py-1 shadow-sm shadow-emerald-200"
+        >
+          <span class="relative flex h-1.5 w-1.5">
+            <span
+              class="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"
+            />
+            <span
+              class="relative inline-flex h-1.5 w-1.5 rounded-full bg-white"
+            />
+          </span>
+          <span
+            class="text-[10px] font-bold uppercase tracking-widest text-white"
+            >กำลังขาย</span
+          >
+        </div>
+
+        <!-- Divider -->
+        <div class="h-4 w-px shrink-0 bg-emerald-200" />
+
+        <!-- Cashier -->
+        <div class="flex items-center gap-1.5 text-xs">
+          <Icon
+            name="heroicons:user-circle"
+            class="h-3.5 w-3.5 shrink-0 text-emerald-500"
+          />
+          <span class="font-semibold text-slate-700">{{
+            shift.currentShift?.openedBy
+          }}</span>
+        </div>
+
+        <!-- Divider -->
+        <div class="h-4 w-px shrink-0 bg-emerald-200" />
+
+        <!-- Duration -->
+        <div class="flex items-center gap-1.5 text-xs text-slate-500">
+          <Icon
+            name="heroicons:clock"
+            class="h-3.5 w-3.5 shrink-0 text-emerald-400"
+          />
+          <span
+            >เปิดมา
+            <strong class="text-slate-700">{{ shiftDuration }}</strong></span
+          >
+        </div>
+
+        <div class="flex-1" />
+
+        <!-- Opened at -->
+        <span class="shrink-0 text-[10px] text-slate-400"
+          >เริ่มเมื่อ {{ openedAtTime }} น.</span
+        >
+      </div>
+
       <!-- Categories -->
-      <div class="flex gap-2 overflow-x-auto bg-white border-b border-slate-200 px-4 py-2.5 scrollbar-none">
+      <div
+        class="flex gap-2 overflow-x-auto bg-white border-b border-slate-200 px-4 py-2.5 scrollbar-none"
+      >
         <button
           v-for="cat in productStore.categories"
           :key="cat.id"
@@ -75,7 +182,9 @@
       </div>
 
       <!-- Toolbar: page size + pagination -->
-      <div class="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 gap-3">
+      <div
+        class="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 gap-3"
+      >
         <!-- Page size dropdown -->
         <div class="flex items-center gap-2 shrink-0">
           <span class="text-xs text-slate-400 hidden sm:block">แสดง</span>
@@ -84,14 +193,18 @@
               v-model="pageSize"
               class="h-8 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-7 text-xs font-medium text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 cursor-pointer hover:border-slate-300 transition"
             >
-              <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+              <option v-for="size in pageSizeOptions" :key="size" :value="size">
+                {{ size }}
+              </option>
             </select>
             <Icon
               name="heroicons:chevron-down"
               class="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400"
             />
           </div>
-          <span class="text-xs text-slate-400 hidden sm:block">รายการ/หน้า</span>
+          <span class="text-xs text-slate-400 hidden sm:block"
+            >รายการ/หน้า</span
+          >
         </div>
 
         <!-- Pagination controls -->
@@ -100,7 +213,9 @@
           <span class="text-xs text-slate-400 mr-1 tabular-nums">
             {{ pagination.startItem.value }}–{{ pagination.endItem.value }}
             <span class="text-slate-300 mx-0.5">/</span>
-            <span class="font-medium text-slate-600">{{ pagination.totalItems.value }}</span>
+            <span class="font-medium text-slate-600">{{
+              pagination.totalItems.value
+            }}</span>
           </span>
 
           <!-- Prev -->
@@ -114,7 +229,11 @@
 
           <!-- Page numbers -->
           <template v-for="(page, i) in pagination.pageNumbers.value" :key="i">
-            <span v-if="page === -1" class="flex w-5 items-center justify-center text-xs text-slate-300">…</span>
+            <span
+              v-if="page === -1"
+              class="flex w-5 items-center justify-center text-xs text-slate-300"
+              >…</span
+            >
             <button
               v-else
               :class="[
@@ -131,7 +250,9 @@
 
           <!-- Next -->
           <button
-            :disabled="pagination.currentPage.value >= pagination.totalPages.value"
+            :disabled="
+              pagination.currentPage.value >= pagination.totalPages.value
+            "
             class="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             @click="pagination.next()"
           >
@@ -154,25 +275,48 @@
               @add="handleProductAdd"
             />
           </div>
-          <div v-else class="flex h-full flex-col items-center justify-center gap-2 text-slate-400">
+          <div
+            v-else
+            class="flex h-full flex-col items-center justify-center gap-2 text-slate-400"
+          >
             <Icon name="heroicons:archive-box-x-mark" class="h-14 w-14" />
             <p class="text-sm">ไม่พบสินค้า</p>
           </div>
         </div>
 
         <!-- Pagination -->
-        <div class="hidden">
-        </div>
+        <div class="hidden"></div>
       </div>
     </div>
 
     <!-- ===== RIGHT: Cart ===== -->
-    <div class="flex w-80 flex-col border-l border-slate-200 bg-slate-50 lg:w-96 xl:w-[420px]">
+    <div
+      class="relative flex w-80 flex-col border-l border-slate-200 bg-slate-50 lg:w-96 xl:w-[420px]"
+    >
+      <!-- Overlay: ยังไม่ได้เปิดกะ -->
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        leave-active-class="transition-opacity duration-200"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="!shift.isOpen"
+          class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-slate-50/90 backdrop-blur-[2px]"
+        >
+          <Icon name="heroicons:lock-closed" class="h-8 w-8 text-slate-300" />
+          <p class="text-sm text-slate-400">ยังไม่ได้เปิดกะ</p>
+        </div>
+      </Transition>
 
       <!-- Cart Header -->
-      <div class="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-5">
+      <div
+        class="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-5"
+      >
         <div class="flex items-center gap-2.5">
-          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+          <div
+            class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600"
+          >
             <Icon name="heroicons:shopping-cart" class="h-4 w-4 text-white" />
           </div>
           <span class="font-bold text-slate-800">รายการสั่งซื้อ</span>
@@ -205,8 +349,13 @@
             @remove="cart.removeItem"
           />
         </div>
-        <div v-else class="flex h-full flex-col items-center justify-center gap-3 text-slate-300">
-          <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100">
+        <div
+          v-else
+          class="flex h-full flex-col items-center justify-center gap-3 text-slate-300"
+        >
+          <div
+            class="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100"
+          >
             <Icon name="heroicons:shopping-cart" class="h-10 w-10" />
           </div>
           <div class="text-center">
@@ -221,7 +370,9 @@
         <!-- Row: ยอดรวม -->
         <div class="flex justify-between text-sm">
           <span class="text-slate-500">ยอดรวม</span>
-          <span class="font-semibold text-slate-700">{{ fmt.currency(cart.subtotal) }}</span>
+          <span class="font-semibold text-slate-700">{{
+            fmt.currency(cart.subtotal)
+          }}</span>
         </div>
 
         <!-- Row: ส่วนลด -->
@@ -243,7 +394,9 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-xs text-slate-400">ยอดสุทธิ</p>
-            <p class="text-2xl font-extrabold text-blue-600 leading-tight">{{ fmt.currency(cart.total) }}</p>
+            <p class="text-2xl font-extrabold text-blue-600 leading-tight">
+              {{ fmt.currency(cart.total) }}
+            </p>
           </div>
           <div class="text-right text-xs text-slate-400">
             <p>{{ cart.itemCount }} รายการ</p>
@@ -252,13 +405,13 @@
 
         <!-- Checkout button -->
         <button
-          :disabled="!cart.items.length"
+          :disabled="!cart.items.length || !shift.isOpen"
           class="w-full rounded-2xl bg-blue-600 py-4 text-base font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-40 disabled:shadow-none"
           @click="showPayment = true"
         >
           <span class="flex items-center justify-center gap-2">
             <Icon name="heroicons:banknotes" class="h-5 w-5" />
-            ชำระเงิน
+            {{ shift.isOpen ? "ชำระเงิน" : "ต้องเปิดกะก่อน" }}
           </span>
         </button>
       </div>
@@ -278,6 +431,7 @@
       :total="cart.total"
       @close="showPayment = false"
       @confirm="handlePayment"
+      @done="handlePaymentDone"
     />
 
     <!-- Logout Confirm -->
@@ -295,61 +449,85 @@
 </template>
 
 <script setup lang="ts">
-import type { PaymentMethod } from '~/types/order'
-import type { Product } from '~/types/product'
-import type { SelectedOption } from '~/types/cart'
+import type { PaymentMethod } from "~/types/order";
+import type { Product } from "~/types/product";
+import type { SelectedOption } from "~/types/cart";
 
-definePageMeta({ layout: 'pos' })
+definePageMeta({ layout: "pos" });
 
-const cart = useCartStore()
-const productStore = useProductStore()
-const orderStore = useOrderStore()
-const setting = useSettingStore()
-const auth = useAuthStore()
-const toast = useToast()
+const cart = useCartStore();
+const productStore = useProductStore();
+const orderStore = useOrderStore();
+const setting = useSettingStore();
+const auth = useAuthStore();
+const shift = useShiftStore();
+const toast = useToast();
 
-const fmt = useFormatter()
+const fmt = useFormatter();
 
 async function handleLogout() {
-  showLogoutConfirm.value = false
-  auth.logout()
-  await navigateTo('/login')
+  showLogoutConfirm.value = false;
+  auth.logout();
+  await navigateTo("/login");
 }
 
-const showPayment = ref(false)
-const showLogoutConfirm = ref(false)
-const showOptionModal = ref(false)
-const selectedProduct = ref<Product | null>(null)
+const showPayment = ref(false);
+const showLogoutConfirm = ref(false);
+const showOptionModal = ref(false);
+const selectedProduct = ref<Product | null>(null);
 
-const pageSizeOptions = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100] as const
-const pageSize = ref<number>(10)
-const pagination = usePagination(computed(() => productStore.filtered), pageSize)
+const pageSizeOptions = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100] as const;
+
+const shiftDuration = computed(() => {
+  if (!shift.currentShift) return "";
+  const ms = Date.now() - new Date(shift.currentShift.openedAt).getTime();
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return h > 0 ? `${h} ชม. ${m} นาที` : `${m} นาที`;
+});
+
+const openedAtTime = computed(() => {
+  if (!shift.currentShift) return "";
+  return new Date(shift.currentShift.openedAt).toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+});
+const pageSize = ref<number>(10);
+const pagination = usePagination(
+  computed(() => productStore.filtered),
+  pageSize,
+);
 
 function getQtyById(itemId: string) {
-  return cart.items.find((i) => i.id === itemId)?.quantity ?? 0
+  return cart.items.find((i) => i.id === itemId)?.quantity ?? 0;
 }
 
 function handleProductAdd(product: Product) {
   if (product.options?.length) {
-    selectedProduct.value = product
-    showOptionModal.value = true
+    selectedProduct.value = product;
+    showOptionModal.value = true;
   } else {
-    cart.addItem(product)
+    cart.addItem(product);
   }
 }
 
-function handleOptionConfirm(selectedOptions: SelectedOption[], optionExtra: number, qty: number) {
+function handleOptionConfirm(
+  selectedOptions: SelectedOption[],
+  optionExtra: number,
+  qty: number,
+) {
   if (selectedProduct.value) {
-    cart.addItem(selectedProduct.value, selectedOptions, optionExtra, qty)
+    cart.addItem(selectedProduct.value, selectedOptions, optionExtra, qty);
   }
-  showOptionModal.value = false
-  selectedProduct.value = null
+  showOptionModal.value = false;
+  selectedProduct.value = null;
 }
 
 function handlePayment(payload: {
-  method: PaymentMethod
-  cashReceived?: number
-  change?: number
+  method: PaymentMethod;
+  cashReceived?: number;
+  change?: number;
 }) {
   orderStore.addOrder({
     items: cart.items.map((i) => ({
@@ -367,11 +545,16 @@ function handlePayment(payload: {
     paymentMethod: payload.method,
     cashReceived: payload.cashReceived,
     change: payload.change,
-    status: 'completed',
-  })
+    status: "completed",
+  });
 
-  cart.clear()
-  showPayment.value = false
-  toast.success('ชำระเงินสำเร็จ')
+  // อัพเดทยอดขายในกะ
+  const isCash = payload.method === "cash";
+  shift.addSales(isCash ? cart.total : 0, isCash ? 0 : cart.total);
+}
+
+function handlePaymentDone() {
+  cart.clear();
+  showPayment.value = false;
 }
 </script>

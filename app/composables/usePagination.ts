@@ -3,7 +3,7 @@ import type { Ref, ComputedRef } from 'vue'
 
 export function usePagination<T>(
   items: Ref<T[]> | ComputedRef<T[]>,
-  pageSizeInput: number | Ref<number> = 12,
+  pageSizeInput: number | Ref<number> = 10,
 ) {
   const pageSizeRef: Ref<number> = isRef(pageSizeInput) ? pageSizeInput : ref(pageSizeInput)
   const currentPage = ref(1)
