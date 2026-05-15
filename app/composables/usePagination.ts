@@ -2,23 +2,26 @@ import { ref, computed, watch, isRef } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 
 export function usePagination<T>(
-  items: Ref<T[]> | ComputedRef<T[]>,
+  items: T[] | Ref<T[]> | ComputedRef<T[]>,
   pageSizeInput: number | Ref<number> = 10,
 ) {
   const pageSizeRef: Ref<number> = isRef(pageSizeInput) ? pageSizeInput : ref(pageSizeInput)
   const currentPage = ref(1)
 
-  const totalItems = computed(() => items.value.length)
+  // Support both plain arrays (Pinia unwrapped) and Ref/ComputedRef
+  const resolvedItems = computed<T[]>(() => (isRef(items) ? items.value : items) ?? [])
+
+  const totalItems = computed(() => resolvedItems.value.length)
   const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / pageSizeRef.value)))
 
   // Reset to first page whenever source list or page size changes
-  watch([items, pageSizeRef], () => {
+  watch([resolvedItems, pageSizeRef], () => {
     currentPage.value = 1
   })
 
   const paged = computed<T[]>(() => {
     const start = (currentPage.value - 1) * pageSizeRef.value
-    return items.value.slice(start, start + pageSizeRef.value)
+    return resolvedItems.value.slice(start, start + pageSizeRef.value)
   })
 
   const startItem = computed(() =>

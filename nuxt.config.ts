@@ -7,5 +7,10 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@nuxt/icon'
-  ]
+  ],
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag) => tag.startsWith('calendar-'),
+    },
+  },
 })

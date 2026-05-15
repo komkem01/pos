@@ -151,8 +151,8 @@ const navGroups: NavGroup[] = [
     icon: 'heroicons:archive-box',
     children: [
       { label: 'รายการสินค้า', to: '/products' },
-      { label: 'หมวดหมู่', to: '/products/categories' },
-      { label: 'จัดการสต็อก', to: '/products/stock' },
+      { label: 'หมวดหมู่', to: '/categories' },
+      { label: 'จัดการสต็อก', to: '/stock' },
     ],
   },
   {
